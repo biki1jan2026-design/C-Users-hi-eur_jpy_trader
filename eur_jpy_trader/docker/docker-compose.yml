@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  trader-backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: eurjpy-trader
+    environment:
+      - PYTHONUNBUFFERED=1
+      - LOG_LEVEL=INFO
+      - DEMO_BALANCE=50000
+      - RISK_PER_TRADE=0.02
+      - TIMEFRAME=1m
+      - SYMBOL=EUR/JPY
+    volumes:
+      - ../logs:/app/logs
+      - ../data:/app/data
+      - ../screenshots:/app/screenshots
+    ports:
+      - "8541:8541"
+    restart: unless-stopped
+    networks:
+      - trader-net
+
+  trader-gui:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    container_name: eurjpy-gui
+    environment:
+      - BACKEND_URL=ws://trader-backend:8541/ws
+      - DISPLAY=:0
+    depends_on:
+      - trader-backend
+    volumes:
+      - ../screenshots:/app/screenshots
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    networks:
+      - trader-net
+
+networks:
+  trader-net:
+    driver: bridge
